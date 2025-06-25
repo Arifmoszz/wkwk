@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="admin-container">
+        <h2>Admin Panel</h2>
+        <div class="admin-controls">
+            <h3>User Management</h3>
+            <div class="user-list" id="userList">
+                <!-- Users will be listed here -->
+            </div>
+            <button id="deleteUserBtn">Delete Selected User</button>
+        </div>
+    </div>
+
+    <script>
+        // Simple admin authentication (in real app, use proper auth)
+        const adminPassword = "admin123"; // Change this in production
+        
+        const enteredPassword = prompt("Enter admin password:");
+        if (enteredPassword !== adminPassword) {
+            alert("Invalid admin password!");
+            window.location.href = 'index.html';
+        }
+        
+        // Load users
+        function loadUsers() {
+            const userListDiv = document.getElementById('userList');
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            
+            userListDiv.innerHTML = '';
+            users.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'radio';
+                checkbox.name = 'userSelect';
+                checkbox.value = user;
+                
+                const label = document.createElement('label');
+                label.textContent = user;
+                
+                userDiv.appendChild(checkbox);
+                userDiv.appendChild(label);
+                userListDiv.appendChild(userDiv);
+            });
+        }
+        
+        // Delete user
+        document.getElementById('deleteUserBtn').addEventListener('click', function() {
+            const selectedUser = document.querySelector('input[name="userSelect"]:checked');
+            if (!selectedUser) {
+                alert('Please select a user to delete');
+                return;
+            }
+            
+            const username = selectedUser.value;
+            
+            // Remove user from users list
+            let users = JSON.parse(localStorage.getItem('users')) || [];
+            users = users.filter(u => u !== username);
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            // Remove user data
+            localStorage.removeItem('user_' + username);
+            
+            // Remove all chats involving this user
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('chat_') && (key.includes('_' + username + '_') || key.endsWith('_' + username))) {
+                    localStorage.removeItem(key);
+                }
+            });
+            
+            alert(`User ${username} deleted successfully!`);
+            loadUsers();
+        });
+        
+        // Load users on page load
+        window.addEventListener('load', loadUsers);
+    </script>
+</body>
+</html>
