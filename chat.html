@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp-like Chat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="user-profile">
+                    <div class="avatar" id="userAvatar">${getInitials(currentUser)}</div>
+                    <div class="user-info">
+                        <span id="currentUsername"></span>
+                        <small id="userStatus">Online</small>
+                    </div>
+                </div>
+                <div class="sidebar-actions">
+                    <button class="icon-btn" title="New chat" id="newChatBtn">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                    </button>
+                    <button class="icon-btn" title="Menu">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path fill="currentColor" d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search or start new chat">
+            </div>
+            <div class="chats-list" id="contacts">
+                <!-- Contacts will be loaded here -->
+            </div>
+        </div>
+        
+        <!-- Chat Area -->
+        <div class="chat-area" id="chatArea">
+            <div class="empty-chat">
+                <div class="empty-chat-icon">
+                    <svg viewBox="0 0 24 24" width="120" height="120">
+                        <path fill="#54656f" d="M19.005 3.175H4.674C3.642 3.175 3 3.789 3 4.821V21.02l3.544-3.514h12.461c1.033 0 2.064-1.06 2.064-2.093V4.821c-.001-1.032-1.032-1.646-2.064-1.646zm-4.989 9.869H7.041V11.1h6.975v1.944zm3-4H7.041V7.1h9.975v1.944z"/>
+                    </svg>
+                </div>
+                <h3>WhatsApp Web</h3>
+                <p>Select a chat to start messaging</p>
+            </div>
+            
+            <div class="active-chat" style="display: none;">
+                <div class="chat-header">
+                    <div class="chat-partner">
+                        <div class="avatar" id="chatPartnerAvatar"></div>
+                        <div class="partner-info">
+                            <span id="chatPartnerName"></span>
+                            <small id="partnerStatus">Online</small>
+                        </div>
+                    </div>
+                    <div class="chat-actions">
+                        <button class="icon-btn" title="Search">
+                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                <path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                            </svg>
+                        </button>
+                        <button class="icon-btn" title="Menu">
+                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                <path fill="currentColor" d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="messages" id="messages">
+                    <!-- Messages will appear here -->
+                </div>
+                <div class="message-input">
+                    <button class="emoji-btn" title="Emoji">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm0-2a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm-5-5h2a3 3 0 0 0 6 0h2a5 5 0 0 1-10 0zm1-2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm8 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                        </svg>
+                    </button>
+                    <input type="text" id="messageInput" placeholder="Type a message...">
+                    <button class="send-btn" id="sendBtn" title="Send">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is logged in
+        const currentUser = sessionStorage.getItem('currentUser');
+        if (!currentUser) {
+            window.location.href = 'index.html';
+        }
+        
+        // Load user data
+        const userData = JSON.parse(sessionStorage.getItem('userData'));
+        document.getElementById('currentUsername').textContent = currentUser;
+        
+        // Helper functions
+        function getInitials(name) {
+            return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+        }
+        
+        function formatTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        // Load contacts
+        function loadContacts() {
+            const contactsDiv = document.getElementById('contacts');
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            
+            contactsDiv.innerHTML = '';
+            users.forEach(user => {
+                if (user !== currentUser) {
+                    const userData = JSON.parse(localStorage.getItem('user_' + user));
+                    const lastChatKey = `chat_${currentUser}_${user}`;
+                    const lastMessages = JSON.parse(localStorage.getItem(lastChatKey)) || [];
+                    const lastMessage = lastMessages[lastMessages.length - 1];
+                    
+                    const contact = document.createElement('div');
+                    contact.className = 'chat-item';
+                    contact.innerHTML = `
+                        <div class="avatar">${getInitials(user)}</div>
+                        <div class="chat-info">
+                            <span class="chat-name">${user}</span>
+                            <span class="chat-preview">${lastMessage ? lastMessage.text : 'No messages yet'}</span>
+                        </div>
+                        <div class="chat-time">${lastMessage ? formatTime(lastMessage.timestamp) : ''}</div>
+                    `;
+                    contact.addEventListener('click', () => loadChat(user));
+                    contactsDiv.appendChild(contact);
+                }
+            });
+        }
+        
+        // Load chat with a user
+        function loadChat(contact) {
+            document.querySelector('.empty-chat').style.display = 'none';
+            document.querySelector('.active-chat').style.display = 'flex';
+            
+            document.getElementById('chatPartnerName').textContent = contact;
+            document.getElementById('chatPartnerAvatar').textContent = getInitials(contact);
+            
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            
+            const chatKey = `chat_${currentUser}_${contact}`;
+            const messages = JSON.parse(localStorage.getItem(chatKey)) || [];
+            
+            messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = msg.sender === currentUser ? 'message sent' : 'message received';
+                
+                messageDiv.innerHTML = `
+                    <div class="message-content">${msg.text}</div>
+                    <div class="message-time">${formatTime(msg.timestamp)}</div>
+                `;
+                
+                messagesDiv.appendChild(messageDiv);
+            });
+            
+            // Scroll to bottom
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        // Send message
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        function sendMessage() {
+            const contact = document.getElementById('chatPartnerName').textContent;
+            if (!contact || contact === '') return;
+            
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            const chatKey1 = `chat_${currentUser}_${contact}`;
+            const chatKey2 = `chat_${contact}_${currentUser}`;
+            const timestamp = new Date().toISOString();
+            
+            // Save message in both directions
+            let messages1 = JSON.parse(localStorage.getItem(chatKey1)) || [];
+            messages1.push({ sender: currentUser, text: message, timestamp });
+            localStorage.setItem(chatKey1, JSON.stringify(messages1));
+            
+            let messages2 = JSON.parse(localStorage.getItem(chatKey2)) || [];
+            messages2.push({ sender: currentUser, text: message, timestamp });
+            localStorage.setItem(chatKey2, JSON.stringify(messages2));
+            
+            // Display message
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message sent';
+            messageDiv.innerHTML = `
+                <div class="message-content">${message}</div>
+                <div class="message-time">${formatTime(timestamp)}</div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            
+            messageInput.value = '';
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            // Update contacts list
+            loadContacts();
+        }
+        
+        // New chat button
+        document.getElementById('newChatBtn').addEventListener('click', function() {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const availableUsers = users.filter(u => u !== currentUser);
+            
+            if (availableUsers.length === 0) {
+                alert('No other users available');
+                return;
+            }
+            
+            const userToChat = prompt('Enter username to chat with:', availableUsers[0]);
+            if (userToChat && availableUsers.includes(userToChat)) {
+                loadChat(userToChat);
+            } else if (userToChat) {
+                alert('User not found');
+            }
+        });
+        
+        // Load contacts on page load
+        window.addEventListener('load', loadContacts);
+    </script>
+</body>
+</html>
