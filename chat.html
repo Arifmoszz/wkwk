@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp-like Chat</title>
+    <title>Global WhatsApp-like Chat</title>
     <style>
         * {
             margin: 0;
@@ -106,6 +106,7 @@
         .search-bar {
             padding: 8px 12px;
             background-color: #f0f2f5;
+            position: relative;
         }
         
         .search-bar input {
@@ -142,6 +143,10 @@
         
         .chat-item.active {
             background-color: #f0f2f5;
+        }
+        
+        .chat-item.unread {
+            background-color: #f0f8ff;
         }
         
         .chat-info {
@@ -282,6 +287,14 @@
             color: #111b21;
         }
         
+        .message-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        
         .message-time {
             font-size: 11px;
             color: #667781;
@@ -306,7 +319,7 @@
             outline: none;
         }
         
-        .emoji-btn, .send-btn {
+        .emoji-btn, .send-btn, .attach-btn {
             background: none;
             border: none;
             cursor: pointer;
@@ -318,7 +331,7 @@
             justify-content: center;
         }
         
-        .emoji-btn:hover, .send-btn:hover {
+        .emoji-btn:hover, .send-btn:hover, .attach-btn:hover {
             background-color: #e9edef;
         }
         
@@ -328,7 +341,7 @@
         
         .search-results {
             position: absolute;
-            width: calc(30% - 24px);
+            width: calc(100% - 24px);
             max-height: 300px;
             overflow-y: auto;
             background-color: white;
@@ -413,6 +426,116 @@
             color: #667781;
             padding: 20px;
         }
+        
+        .country-flag {
+            width: 20px;
+            height: 15px;
+            margin-right: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .image-preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .image-preview-content {
+            max-width: 90%;
+            max-height: 90%;
+        }
+        
+        .image-preview-content img {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+        
+        .close-preview {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 10px;
+            font-size: 12px;
+            color: #667781;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 2px;
+        }
+        
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #667781;
+            border-radius: 50%;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+        
+        .global-chat-badge {
+            background-color: #25D366;
+            color: white;
+            font-size: 10px;
+            padding: 2px 5px;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+        
+        .message-status {
+            margin-left: 5px;
+            font-size: 12px;
+        }
+        
+        .message-status.sent {
+            color: #667781;
+        }
+        
+        .message-status.delivered {
+            color: #4FC3F7;
+        }
+        
+        .message-status.read {
+            color: #4CAF50;
+        }
     </style>
 </head>
 <body>
@@ -457,7 +580,7 @@
                         <path fill="#54656f" d="M19.005 3.175H4.674C3.642 3.175 3 3.789 3 4.821V21.02l3.544-3.514h12.461c1.033 0 2.064-1.06 2.064-2.093V4.821c-.001-1.032-1.032-1.646-2.064-1.646zm-4.989 9.869H7.041V11.1h6.975v1.944zm3-4H7.041V7.1h9.975v1.944z"/>
                     </svg>
                 </div>
-                <h3>WhatsApp Web</h3>
+                <h3>Global Chat App</h3>
                 <p>Select a chat to start messaging</p>
             </div>
             
@@ -468,6 +591,14 @@
                         <div class="partner-info">
                             <span id="chatPartnerName"></span>
                             <small id="partnerStatus">Online</small>
+                            <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                                <span>typing</span>
+                                <div class="typing-dots">
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="chat-actions">
@@ -487,6 +618,12 @@
                     <!-- Messages will appear here -->
                 </div>
                 <div class="message-input">
+                    <button class="attach-btn" title="Attach file" id="attachBtn">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
+                        </svg>
+                    </button>
+                    <input type="file" id="fileInput" class="file-input" accept="image/*">
                     <button class="emoji-btn" title="Emoji" id="emojiBtn">
                         <svg viewBox="0 0 24 24" width="24" height="24">
                             <path fill="currentColor" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm0-2a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm-5-5h2a3 3 0 0 0 6 0h2a5 5 0 0 1-10 0zm1-2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm8 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
@@ -516,6 +653,14 @@
         </div>
     </div>
 
+    <!-- Image Preview Modal -->
+    <div class="image-preview-modal" id="imagePreviewModal">
+        <span class="close-preview">&times;</span>
+        <div class="image-preview-content">
+            <img id="previewImage" src="" alt="Preview">
+        </div>
+    </div>
+
     <script>
         // Check if user is logged in
         const currentUser = sessionStorage.getItem('currentUser');
@@ -526,6 +671,26 @@
         // Initialize user data
         document.getElementById('currentUsername').textContent = currentUser;
         document.getElementById('userAvatar').textContent = getInitials(currentUser);
+        
+        // Global chat simulation variables
+        const globalUsers = [
+            { name: "John Doe", country: "US", online: true },
+            { name: "Maria Garcia", country: "ES", online: true },
+            { name: "Ahmed Khan", country: "PK", online: false },
+            { name: "Yuki Tanaka", country: "JP", online: true },
+            { name: "Léa Martin", country: "FR", online: false },
+            { name: "Carlos Silva", country: "BR", online: true },
+            { name: "Anna Müller", country: "DE", online: true },
+            { name: "David Wilson", country: "GB", online: false },
+            { name: "Li Wei", country: "CN", online: true },
+            { name: "Olga Ivanova", country: "RU", online: false }
+        ];
+        
+        const countryFlags = {
+            US: "🇺🇸", ES: "🇪🇸", PK: "🇵🇰", JP: "🇯🇵", 
+            FR: "🇫🇷", BR: "🇧🇷", DE: "🇩🇪", GB: "🇬🇧", 
+            CN: "🇨🇳", RU: "🇷🇺"
+        };
         
         // Helper functions
         function getInitials(name) {
@@ -552,12 +717,38 @@
             }
         }
         
+        // Simulate typing indicator
+        function showTypingIndicator(contact) {
+            if (document.getElementById('chatPartnerName').textContent === contact) {
+                const typingIndicator = document.getElementById('typingIndicator');
+                typingIndicator.style.display = 'flex';
+                
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    typingIndicator.style.display = 'none';
+                }, 3000);
+            }
+        }
+        
         // Load contacts
         function loadContacts() {
             const contactsDiv = document.getElementById('contacts');
             const users = JSON.parse(localStorage.getItem('users')) || [];
             
             contactsDiv.innerHTML = '';
+            
+            // Add global chat option
+            const globalChatItem = document.createElement('div');
+            globalChatItem.className = 'chat-item';
+            globalChatItem.innerHTML = `
+                <div class="avatar">🌎</div>
+                <div class="chat-info">
+                    <span class="chat-name">Global Chat <span class="global-chat-badge">NEW</span></span>
+                    <span class="chat-preview">Chat with people around the world</span>
+                </div>
+            `;
+            globalChatItem.addEventListener('click', () => loadGlobalChat());
+            contactsDiv.appendChild(globalChatItem);
             
             // Get all chats involving current user
             let chats = [];
@@ -574,7 +765,7 @@
                         if (!chats.some(chat => chat.user === otherUser)) {
                             chats.push({
                                 user: otherUser,
-                                lastMessage: lastMessage.text,
+                                lastMessage: lastMessage.text || (lastMessage.image ? "📷 Photo" : ""),
                                 timestamp: lastMessage.timestamp,
                                 unread: key.startsWith(`chat_${currentUser}_`) ? false : messages.some(msg => !msg.read && msg.sender !== currentUser)
                             });
@@ -620,6 +811,58 @@
             });
         }
         
+        // Load global chat
+        function loadGlobalChat() {
+            document.querySelector('.empty-chat').style.display = 'none';
+            document.querySelector('.active-chat').style.display = 'flex';
+            
+            document.getElementById('chatPartnerName').textContent = "Global Chat";
+            document.getElementById('chatPartnerAvatar').textContent = "🌎";
+            document.getElementById('partnerStatus').textContent = `${globalUsers.filter(u => u.online).length} online`;
+            
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            
+            // Load global messages
+            const globalMessages = JSON.parse(localStorage.getItem('global_chat')) || [];
+            
+            globalMessages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = msg.sender === currentUser ? 'message sent' : 'message received';
+                
+                // Check if message is from a global user (not local storage user)
+                const globalUser = globalUsers.find(u => u.name === msg.sender);
+                const senderName = globalUser ? `${msg.sender} ${countryFlags[globalUser.country] || ''}` : msg.sender;
+                
+                if (msg.image) {
+                    messageDiv.innerHTML = `
+                        <div class="message-content">
+                            <div><strong>${senderName}</strong></div>
+                            <img src="${msg.image}" class="message-image" onclick="showImagePreview('${msg.image}')">
+                            ${msg.text ? `<div>${msg.text}</div>` : ''}
+                        </div>
+                        <div class="message-time">${formatTime(msg.timestamp)}</div>
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="message-content">
+                            <div><strong>${senderName}</strong></div>
+                            <div>${msg.text}</div>
+                        </div>
+                        <div class="message-time">${formatTime(msg.timestamp)}</div>
+                    `;
+                }
+                
+                messagesDiv.appendChild(messageDiv);
+            });
+            
+            // Scroll to bottom
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            // Focus on input
+            document.getElementById('messageInput').focus();
+        }
+        
         // Load chat with a user
         function loadChat(contact) {
             document.querySelector('.empty-chat').style.display = 'none';
@@ -627,6 +870,15 @@
             
             document.getElementById('chatPartnerName').textContent = contact;
             document.getElementById('chatPartnerAvatar').textContent = getInitials(contact);
+            
+            // Check if this is a global user
+            const globalUser = globalUsers.find(u => u.name === contact);
+            if (globalUser) {
+                document.getElementById('partnerStatus').textContent = globalUser.online ? "Online" : "Offline";
+                document.getElementById('partnerStatus').innerHTML += ` ${countryFlags[globalUser.country] || ''}`;
+            } else {
+                document.getElementById('partnerStatus').textContent = "Online";
+            }
             
             const messagesDiv = document.getElementById('messages');
             messagesDiv.innerHTML = '';
@@ -638,10 +890,30 @@
                 const messageDiv = document.createElement('div');
                 messageDiv.className = msg.sender === currentUser ? 'message sent' : 'message received';
                 
-                messageDiv.innerHTML = `
-                    <div class="message-content">${msg.text}</div>
-                    <div class="message-time">${formatTime(msg.timestamp)}</div>
-                `;
+                if (msg.image) {
+                    messageDiv.innerHTML = `
+                        <div class="message-content">
+                            <img src="${msg.image}" class="message-image" onclick="showImagePreview('${msg.image}')">
+                            ${msg.text ? `<div>${msg.text}</div>` : ''}
+                        </div>
+                        <div class="message-time">${formatTime(msg.timestamp)} 
+                            ${msg.sender === currentUser ? 
+                                `<span class="message-status ${msg.read ? 'read' : msg.delivered ? 'delivered' : 'sent'}">
+                                    ${msg.read ? '✓✓' : msg.delivered ? '✓✓' : '✓'}
+                                </span>` : ''}
+                        </div>
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="message-content">${msg.text}</div>
+                        <div class="message-time">${formatTime(msg.timestamp)} 
+                            ${msg.sender === currentUser ? 
+                                `<span class="message-status ${msg.read ? 'read' : msg.delivered ? 'delivered' : 'sent'}">
+                                    ${msg.read ? '✓✓' : msg.delivered ? '✓✓' : '✓'}
+                                </span>` : ''}
+                        </div>
+                    `;
+                }
                 
                 messagesDiv.appendChild(messageDiv);
                 
@@ -660,6 +932,174 @@
             
             // Update contacts list
             loadContacts();
+            
+            // Simulate partner typing occasionally
+            if (Math.random() > 0.7 && (globalUser?.online || !globalUser)) {
+                setTimeout(() => {
+                    showTypingIndicator(contact);
+                    
+                    // Simulate receiving a message after typing
+                    setTimeout(() => {
+                        if (document.getElementById('chatPartnerName').textContent === contact) {
+                            receiveMessage(contact);
+                        }
+                    }, 3000);
+                }, 2000);
+            }
+        }
+        
+        // Simulate receiving a message
+        function receiveMessage(contact) {
+            const isGlobalChat = contact === "Global Chat";
+            const messagesDiv = document.getElementById('messages');
+            
+            const responses = [
+                "Hello there!",
+                "How are you doing?",
+                "Nice to hear from you!",
+                "I'm doing well, thanks for asking.",
+                "What about you?",
+                "Let's catch up soon!",
+                "I was just thinking about you.",
+                "Did you see the news today?",
+                "How's your day going?",
+                "😊",
+                "👍",
+                "Sounds good!"
+            ];
+            
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+            const timestamp = new Date().toISOString();
+            
+            if (isGlobalChat) {
+                // For global chat, simulate messages from random global users
+                const randomUser = globalUsers[Math.floor(Math.random() * globalUsers.length)];
+                const globalMessages = JSON.parse(localStorage.getItem('global_chat')) || [];
+                
+                // 30% chance of sending a photo in global chat
+                const sendPhoto = Math.random() > 0.7;
+                let imageUrl = '';
+                
+                if (sendPhoto) {
+                    // Random placeholder image
+                    const imageNum = Math.floor(Math.random() * 10) + 1;
+                    imageUrl = `https://picsum.photos/id/${imageNum}00/300/200`;
+                }
+                
+                const newMessage = {
+                    sender: randomUser.name,
+                    text: sendPhoto ? '' : randomResponse,
+                    image: sendPhoto ? imageUrl : undefined,
+                    timestamp,
+                    country: randomUser.country
+                };
+                
+                globalMessages.push(newMessage);
+                localStorage.setItem('global_chat', JSON.stringify(globalMessages));
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message received';
+                
+                if (sendPhoto) {
+                    messageDiv.innerHTML = `
+                        <div class="message-content">
+                            <div><strong>${randomUser.name} ${countryFlags[randomUser.country] || ''}</strong></div>
+                            <img src="${imageUrl}" class="message-image" onclick="showImagePreview('${imageUrl}')">
+                            ${randomResponse ? `<div>${randomResponse}</div>` : ''}
+                        </div>
+                        <div class="message-time">${formatTime(timestamp)}</div>
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="message-content">
+                            <div><strong>${randomUser.name} ${countryFlags[randomUser.country] || ''}</strong></div>
+                            <div>${randomResponse}</div>
+                        </div>
+                        <div class="message-time">${formatTime(timestamp)}</div>
+                    `;
+                }
+                
+                messagesDiv.appendChild(messageDiv);
+            } else {
+                // For private chat
+                const chatKey1 = `chat_${contact}_${currentUser}`;
+                const chatKey2 = `chat_${currentUser}_${contact}`;
+                
+                let messages1 = JSON.parse(localStorage.getItem(chatKey1)) || [];
+                let messages2 = JSON.parse(localStorage.getItem(chatKey2)) || [];
+                
+                // 20% chance of sending a photo in private chat
+                const sendPhoto = Math.random() > 0.8;
+                let imageUrl = '';
+                
+                if (sendPhoto) {
+                    // Random placeholder image
+                    const imageNum = Math.floor(Math.random() * 10) + 1;
+                    imageUrl = `https://picsum.photos/id/${imageNum}00/300/200`;
+                }
+                
+                const newMessage = {
+                    sender: contact,
+                    text: sendPhoto ? '' : randomResponse,
+                    image: sendPhoto ? imageUrl : undefined,
+                    timestamp,
+                    read: false
+                };
+                
+                messages1.push(newMessage);
+                messages2.push({...newMessage, read: true});
+                
+                localStorage.setItem(chatKey1, JSON.stringify(messages1));
+                localStorage.setItem(chatKey2, JSON.stringify(messages2));
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message received';
+                
+                if (sendPhoto) {
+                    messageDiv.innerHTML = `
+                        <div class="message-content">
+                            <img src="${imageUrl}" class="message-image" onclick="showImagePreview('${imageUrl}')">
+                            ${randomResponse ? `<div>${randomResponse}</div>` : ''}
+                        </div>
+                        <div class="message-time">${formatTime(timestamp)}</div>
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="message-content">${randomResponse}</div>
+                        <div class="message-time">${formatTime(timestamp)}</div>
+                    `;
+                }
+                
+                messagesDiv.appendChild(messageDiv);
+            }
+            
+            // Scroll to bottom
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            // Update contacts list
+            loadContacts();
+            
+            // Show notification
+            if (!document.hasFocus()) {
+                showNotification(contact, sendPhoto ? "📷 Photo" : randomResponse);
+            }
+        }
+        
+        // Show desktop notification
+        function showNotification(sender, message) {
+            if (!("Notification" in window)) {
+                return;
+            }
+            
+            if (Notification.permission === "granted") {
+                new Notification(`${sender}: ${message}`);
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        new Notification(`${sender}: ${message}`);
+                    }
+                });
+            }
         }
         
         // Send message
@@ -678,35 +1118,299 @@
             const message = messageInput.value.trim();
             if (!message) return;
             
-            const chatKey1 = `chat_${currentUser}_${contact}`;
-            const chatKey2 = `chat_${contact}_${currentUser}`;
+            const isGlobalChat = contact === "Global Chat";
             const timestamp = new Date().toISOString();
             
-            // Save message in both directions
-            let messages1 = JSON.parse(localStorage.getItem(chatKey1)) || [];
-            messages1.push({ sender: currentUser, text: message, timestamp, read: true });
-            localStorage.setItem(chatKey1, JSON.stringify(messages1));
-            
-            let messages2 = JSON.parse(localStorage.getItem(chatKey2)) || [];
-            messages2.push({ sender: currentUser, text: message, timestamp, read: false });
-            localStorage.setItem(chatKey2, JSON.stringify(messages2));
-            
-            // Display message
-            const messagesDiv = document.getElementById('messages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message sent';
-            messageDiv.innerHTML = `
-                <div class="message-content">${message}</div>
-                <div class="message-time">${formatTime(timestamp)}</div>
-            `;
-            messagesDiv.appendChild(messageDiv);
+            if (isGlobalChat) {
+                // Handle global chat message
+                const globalMessages = JSON.parse(localStorage.getItem('global_chat')) || [];
+                globalMessages.push({
+                    sender: currentUser,
+                    text: message,
+                    timestamp
+                });
+                localStorage.setItem('global_chat', JSON.stringify(globalMessages));
+                
+                // Display message
+                const messagesDiv = document.getElementById('messages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message sent';
+                messageDiv.innerHTML = `
+                    <div class="message-content">${message}</div>
+                    <div class="message-time">${formatTime(timestamp)}</div>
+                `;
+                messagesDiv.appendChild(messageDiv);
+            } else {
+                // Handle private chat message
+                const chatKey1 = `chat_${currentUser}_${contact}`;
+                const chatKey2 = `chat_${contact}_${currentUser}`;
+                
+                // Save message in both directions
+                let messages1 = JSON.parse(localStorage.getItem(chatKey1)) || [];
+                messages1.push({ 
+                    sender: currentUser, 
+                    text: message, 
+                    timestamp, 
+                    read: true,
+                    delivered: false // Will be updated when "received"
+                });
+                localStorage.setItem(chatKey1, JSON.stringify(messages1));
+                
+                let messages2 = JSON.parse(localStorage.getItem(chatKey2)) || [];
+                messages2.push({ 
+                    sender: currentUser, 
+                    text: message, 
+                    timestamp, 
+                    read: false,
+                    delivered: false
+                });
+                localStorage.setItem(chatKey2, JSON.stringify(messages2));
+                
+                // Display message
+                const messagesDiv = document.getElementById('messages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message sent';
+                messageDiv.innerHTML = `
+                    <div class="message-content">${message}</div>
+                    <div class="message-time">${formatTime(timestamp)} 
+                        <span class="message-status sent">✓</span>
+                    </div>
+                `;
+                messagesDiv.appendChild(messageDiv);
+                
+                // Simulate message delivery and read status
+                setTimeout(() => {
+                    // Update delivery status
+                    messages1[messages1.length - 1].delivered = true;
+                    messages2[messages2.length - 1].delivered = true;
+                    localStorage.setItem(chatKey1, JSON.stringify(messages1));
+                    localStorage.setItem(chatKey2, JSON.stringify(messages2));
+                    
+                    // Update UI if we're still in this chat
+                    if (document.getElementById('chatPartnerName').textContent === contact) {
+                        const lastMessage = messagesDiv.querySelector('.message.sent:last-child .message-status');
+                        if (lastMessage) {
+                            lastMessage.className = 'message-status delivered';
+                            lastMessage.innerHTML = '✓✓';
+                        }
+                    }
+                    
+                    // Simulate read status after another delay
+                    setTimeout(() => {
+                        messages1[messages1.length - 1].read = true;
+                        messages2[messages2.length - 1].read = true;
+                        localStorage.setItem(chatKey1, JSON.stringify(messages1));
+                        localStorage.setItem(chatKey2, JSON.stringify(messages2));
+                        
+                        if (document.getElementById('chatPartnerName').textContent === contact) {
+                            const lastMessage = messagesDiv.querySelector('.message.sent:last-child .message-status');
+                            if (lastMessage) {
+                                lastMessage.className = 'message-status read';
+                                lastMessage.innerHTML = '✓✓';
+                            }
+                        }
+                    }, 2000);
+                }, 1000);
+            }
             
             messageInput.value = '';
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
             
             // Update contacts list
             loadContacts();
+            
+            // Simulate response if this is a global user
+            const globalUser = globalUsers.find(u => u.name === contact);
+            if (globalUser && globalUser.online) {
+                setTimeout(() => {
+                    showTypingIndicator(contact);
+                    
+                    // Simulate receiving a message after typing
+                    setTimeout(() => {
+                        if (document.getElementById('chatPartnerName').textContent === contact) {
+                            receiveMessage(contact);
+                        }
+                    }, 3000);
+                }, 2000);
+            }
         }
+        
+        // Handle file upload
+        document.getElementById('attachBtn').addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+        });
+        
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.match('image.*')) {
+                alert('Please select an image file');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const imageUrl = event.target.result;
+                sendImage(imageUrl);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        function sendImage(imageUrl) {
+            const contact = document.getElementById('chatPartnerName').textContent;
+            if (!contact || contact === '') return;
+            
+            const isGlobalChat = contact === "Global Chat";
+            const timestamp = new Date().toISOString();
+            const messageInput = document.getElementById('messageInput');
+            const caption = messageInput.value.trim();
+            
+            if (isGlobalChat) {
+                // Handle global chat image
+                const globalMessages = JSON.parse(localStorage.getItem('global_chat')) || [];
+                globalMessages.push({
+                    sender: currentUser,
+                    text: caption,
+                    image: imageUrl,
+                    timestamp
+                });
+                localStorage.setItem('global_chat', JSON.stringify(globalMessages));
+                
+                // Display message
+                const messagesDiv = document.getElementById('messages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message sent';
+                messageDiv.innerHTML = `
+                    <div class="message-content">
+                        <img src="${imageUrl}" class="message-image" onclick="showImagePreview('${imageUrl}')">
+                        ${caption ? `<div>${caption}</div>` : ''}
+                    </div>
+                    <div class="message-time">${formatTime(timestamp)}</div>
+                `;
+                messagesDiv.appendChild(messageDiv);
+            } else {
+                // Handle private chat image
+                const chatKey1 = `chat_${currentUser}_${contact}`;
+                const chatKey2 = `chat_${contact}_${currentUser}`;
+                
+                // Save message in both directions
+                let messages1 = JSON.parse(localStorage.getItem(chatKey1)) || [];
+                messages1.push({ 
+                    sender: currentUser, 
+                    text: caption,
+                    image: imageUrl,
+                    timestamp, 
+                    read: true,
+                    delivered: false
+                });
+                localStorage.setItem(chatKey1, JSON.stringify(messages1));
+                
+                let messages2 = JSON.parse(localStorage.getItem(chatKey2)) || [];
+                messages2.push({ 
+                    sender: currentUser, 
+                    text: caption,
+                    image: imageUrl,
+                    timestamp, 
+                    read: false,
+                    delivered: false
+                });
+                localStorage.setItem(chatKey2, JSON.stringify(messages2));
+                
+                // Display message
+                const messagesDiv = document.getElementById('messages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message sent';
+                messageDiv.innerHTML = `
+                    <div class="message-content">
+                        <img src="${imageUrl}" class="message-image" onclick="showImagePreview('${imageUrl}')">
+                        ${caption ? `<div>${caption}</div>` : ''}
+                    </div>
+                    <div class="message-time">${formatTime(timestamp)} 
+                        <span class="message-status sent">✓</span>
+                    </div>
+                `;
+                messagesDiv.appendChild(messageDiv);
+                
+                // Simulate message delivery and read status
+                setTimeout(() => {
+                    // Update delivery status
+                    messages1[messages1.length - 1].delivered = true;
+                    messages2[messages2.length - 1].delivered = true;
+                    localStorage.setItem(chatKey1, JSON.stringify(messages1));
+                    localStorage.setItem(chatKey2, JSON.stringify(messages2));
+                    
+                    // Update UI if we're still in this chat
+                    if (document.getElementById('chatPartnerName').textContent === contact) {
+                        const lastMessage = messagesDiv.querySelector('.message.sent:last-child .message-status');
+                        if (lastMessage) {
+                            lastMessage.className = 'message-status delivered';
+                            lastMessage.innerHTML = '✓✓';
+                        }
+                    }
+                    
+                    // Simulate read status after another delay
+                    setTimeout(() => {
+                        messages1[messages1.length - 1].read = true;
+                        messages2[messages2.length - 1].read = true;
+                        localStorage.setItem(chatKey1, JSON.stringify(messages1));
+                        localStorage.setItem(chatKey2, JSON.stringify(messages2));
+                        
+                        if (document.getElementById('chatPartnerName').textContent === contact) {
+                            const lastMessage = messagesDiv.querySelector('.message.sent:last-child .message-status');
+                            if (lastMessage) {
+                                lastMessage.className = 'message-status read';
+                                lastMessage.innerHTML = '✓✓';
+                            }
+                        }
+                    }, 2000);
+                }, 1000);
+            }
+            
+            messageInput.value = '';
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            // Update contacts list
+            loadContacts();
+            
+            // Clear file input
+            document.getElementById('fileInput').value = '';
+            
+            // Simulate response if this is a global user
+            const globalUser = globalUsers.find(u => u.name === contact);
+            if (globalUser && globalUser.online) {
+                setTimeout(() => {
+                    showTypingIndicator(contact);
+                    
+                    // Simulate receiving a message after typing
+                    setTimeout(() => {
+                        if (document.getElementById('chatPartnerName').textContent === contact) {
+                            receiveMessage(contact);
+                        }
+                    }, 3000);
+                }, 2000);
+            }
+        }
+        
+        // Show image preview
+        window.showImagePreview = function(imageUrl) {
+            const modal = document.getElementById('imagePreviewModal');
+            const img = document.getElementById('previewImage');
+            img.src = imageUrl;
+            modal.style.display = 'flex';
+        };
+        
+        // Close image preview
+        document.querySelector('.close-preview').addEventListener('click', function() {
+            document.getElementById('imagePreviewModal').style.display = 'none';
+        });
+        
+        // Close image preview when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target === document.getElementById('imagePreviewModal')) {
+                document.getElementById('imagePreviewModal').style.display = 'none';
+            }
+        });
         
         // Search functionality
         document.getElementById('searchInput').addEventListener('input', function(e) {
@@ -723,13 +1427,20 @@
                 user.toLowerCase().includes(searchTerm) && user !== currentUser
             );
             
-            if (filteredUsers.length === 0) {
+            // Add global users to search results
+            const filteredGlobalUsers = globalUsers.filter(user => 
+                user.name.toLowerCase().includes(searchTerm)
+            );
+            
+            if (filteredUsers.length === 0 && filteredGlobalUsers.length === 0) {
                 searchResults.innerHTML = '<div class="search-result-item">No users found</div>';
                 searchResults.style.display = 'block';
                 return;
             }
             
             searchResults.innerHTML = '';
+            
+            // Add local users first
             filteredUsers.forEach(user => {
                 const resultItem = document.createElement('div');
                 resultItem.className = 'search-result-item';
@@ -739,6 +1450,23 @@
                 `;
                 resultItem.addEventListener('click', () => {
                     loadChat(user);
+                    searchResults.style.display = 'none';
+                    e.target.value = '';
+                });
+                searchResults.appendChild(resultItem);
+            });
+            
+            // Add global users
+            filteredGlobalUsers.forEach(user => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'search-result-item';
+                resultItem.innerHTML = `
+                    <div class="avatar">${getInitials(user.name)}</div>
+                    <span>${user.name} ${countryFlags[user.country] || ''}</span>
+                    <small style="margin-left: auto;">Global User</small>
+                `;
+                resultItem.addEventListener('click', () => {
+                    loadChat(user.name);
                     searchResults.style.display = 'none';
                     e.target.value = '';
                 });
@@ -763,10 +1491,12 @@
             const users = JSON.parse(localStorage.getItem('users')) || [];
             const availableUsers = users.filter(u => u !== currentUser);
             
-            if (availableUsers.length === 0) {
+            if (availableUsers.length === 0 && globalUsers.length === 0) {
                 userList.innerHTML = '<div class="no-users">No other users available</div>';
             } else {
                 userList.innerHTML = '';
+                
+                // Add local users first
                 availableUsers.forEach(user => {
                     const userItem = document.createElement('div');
                     userItem.className = 'user-list-item';
@@ -776,6 +1506,34 @@
                     `;
                     userItem.addEventListener('click', function() {
                         loadChat(user);
+                        modal.style.display = 'none';
+                    });
+                    userList.appendChild(userItem);
+                });
+                
+                // Add separator if we have both local and global users
+                if (availableUsers.length > 0 && globalUsers.length > 0) {
+                    const separator = document.createElement('div');
+                    separator.style.padding = '10px';
+                    separator.style.fontWeight = 'bold';
+                    separator.style.borderBottom = '1px solid #f0f2f5';
+                    separator.textContent = 'Global Users';
+                    userList.appendChild(separator);
+                }
+                
+                // Add global users
+                globalUsers.forEach(user => {
+                    const userItem = document.createElement('div');
+                    userItem.className = 'user-list-item';
+                    userItem.innerHTML = `
+                        <div class="avatar">${getInitials(user.name)}</div>
+                        <span>${user.name} ${countryFlags[user.country] || ''}</span>
+                        <small style="margin-left: auto; color: ${user.online ? '#4CAF50' : '#666'}">
+                            ${user.online ? 'Online' : 'Offline'}
+                        </small>
+                    `;
+                    userItem.addEventListener('click', function() {
+                        loadChat(user.name);
                         modal.style.display = 'none';
                     });
                     userList.appendChild(userItem);
@@ -796,6 +1554,98 @@
             }
         });
         
+        // Request notification permission
+        if ("Notification" in window) {
+            Notification.requestPermission();
+        }
+        
+        // Simulate global chat activity
+        setInterval(() => {
+            // 20% chance of a new global message appearing
+            if (Math.random() > 0.8) {
+                const globalMessages = JSON.parse(localStorage.getItem('global_chat')) || [];
+                const lastMessage = globalMessages[globalMessages.length - 1];
+                
+                // Don't add new message if the last one was very recent
+                if (!lastMessage || (new Date() - new Date(lastMessage.timestamp)) > 30000) {
+                    const randomUser = globalUsers[Math.floor(Math.random() * globalUsers.length)];
+                    
+                    // 30% chance of sending a photo in global chat
+                    const sendPhoto = Math.random() > 0.7;
+                    let imageUrl = '';
+                    
+                    if (sendPhoto) {
+                        // Random placeholder image
+                        const imageNum = Math.floor(Math.random() * 10) + 1;
+                        imageUrl = `https://picsum.photos/id/${imageNum}00/300/200`;
+                    }
+                    
+                    const responses = [
+                        "Hello everyone!",
+                        "How's it going?",
+                        "Anyone here from my country?",
+                        "What's new?",
+                        "Just checking in!",
+                        "😊",
+                        "👍",
+                        "Have a great day!",
+                        "Nice weather today!",
+                        "What are you all up to?"
+                    ];
+                    
+                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                    
+                    const newMessage = {
+                        sender: randomUser.name,
+                        text: sendPhoto ? '' : randomResponse,
+                        image: sendPhoto ? imageUrl : undefined,
+                        timestamp: new Date().toISOString(),
+                        country: randomUser.country
+                    };
+                    
+                    globalMessages.push(newMessage);
+                    localStorage.setItem('global_chat', JSON.stringify(globalMessages));
+                    
+                    // Update chat if we're in global chat view
+                    if (document.getElementById('chatPartnerName').textContent === "Global Chat") {
+                        const messagesDiv = document.getElementById('messages');
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'message received';
+                        
+                        if (sendPhoto) {
+                            messageDiv.innerHTML = `
+                                <div class="message-content">
+                                    <div><strong>${randomUser.name} ${countryFlags[randomUser.country] || ''}</strong></div>
+                                    <img src="${imageUrl}" class="message-image" onclick="showImagePreview('${imageUrl}')">
+                                    ${randomResponse ? `<div>${randomResponse}</div>` : ''}
+                                </div>
+                                <div class="message-time">${formatTime(newMessage.timestamp)}</div>
+                            `;
+                        } else {
+                            messageDiv.innerHTML = `
+                                <div class="message-content">
+                                    <div><strong>${randomUser.name} ${countryFlags[randomUser.country] || ''}</strong></div>
+                                    <div>${randomResponse}</div>
+                                </div>
+                                <div class="message-time">${formatTime(newMessage.timestamp)}</div>
+                            `;
+                        }
+                        
+                        messagesDiv.appendChild(messageDiv);
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    }
+                    
+                    // Show notification if we're not in global chat
+                    if (document.getElementById('chatPartnerName').textContent !== "Global Chat" && !document.hasFocus()) {
+                        showNotification("Global Chat", sendPhoto ? "📷 New photo in global chat" : randomResponse);
+                    }
+                    
+                    // Update contacts list to show new message in global chat
+                    loadContacts();
+                }
+            }
+        }, 10000); // Check every 10 seconds
+        
         // Load contacts on page load
         window.addEventListener('load', function() {
             loadContacts();
@@ -805,8 +1655,12 @@
             const chatWith = urlParams.get('chat');
             if (chatWith) {
                 const users = JSON.parse(localStorage.getItem('users')) || [];
-                if (users.includes(chatWith)) {
+                const globalUser = globalUsers.find(u => u.name === chatWith);
+                
+                if (users.includes(chatWith) || globalUser) {
                     loadChat(chatWith);
+                } else if (chatWith === "Global Chat") {
+                    loadGlobalChat();
                 }
             }
         });
