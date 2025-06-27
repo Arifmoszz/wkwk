@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Cek apakah user sudah login
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser) {
-        window.location.href = '../auth/login.html';
+        window.location.href = 'login.html';
         return;
     }
     
