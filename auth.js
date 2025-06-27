@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (userData && userData.password === password) {
                 localStorage.setItem('currentUser', JSON.stringify(userData));
                 alert('Login berhasil!');
-                window.location.href = '../chat/room.html';
+                window.location.href = 'chat.html';
             } else {
                 alert('Email atau password salah!');
             }
