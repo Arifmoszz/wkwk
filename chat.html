@@ -3,61 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ConnectHub - Live Chat Umum</title>
+    <title>Chat Room - ConnectHub</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="chat.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>ConnectHub</h1>
-            <p>Tempat berinteraksi dengan teman secara real-time</p>
-        </div>
-    </header>
-    
-    <main class="container">
-        <section class="hero">
-            <div class="hero-content">
-                <h2>Mulai Berbincang Sekarang</h2>
-                <p>Bergabunglah dengan komunitas kami dan nikmati pengalaman chatting yang menyenangkan.</p>
-                <div class="cta-buttons">
-                    <a href="login.html" class="btn btn-primary">Masuk</a>
-                    <a href="register.html" class="btn btn-secondary">Daftar</a>
+    <div class="chat-container">
+        <header class="chat-header">
+            <div class="container">
+                <h1><i class="fas fa-comments"></i> ConnectHub Chat</h1>
+                <div class="user-info">
+                    <span id="currentUsername"></span>
+                    <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Keluar</button>
                 </div>
             </div>
-            <div class="hero-image">
-                <img src="assets/chat-illustration.svg" alt="Ilustrasi Chat">
-            </div>
-        </section>
+        </header>
         
-        <section class="features">
-            <h2>Fitur Unggulan</h2>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <img src="assets/real-time-icon.svg" alt="Real-time">
-                    <h3>Chat Real-time</h3>
-                    <p>Kirim dan terima pesan secara instan tanpa delay.</p>
-                </div>
-                <div class="feature-card">
-                    <img src="assets/group-icon.svg" alt="Grup">
-                    <h3>Grup Chat</h3>
-                    <p>Buat grup dengan teman-teman Anda.</p>
-                </div>
-                <div class="feature-card">
-                    <img src="assets/secure-icon.svg" alt="Aman">
-                    <h3>Keamanan</h3>
-                    <p>Data Anda terlindungi dengan enkripsi.</p>
-                </div>
+        <main class="chat-main">
+            <div class="container">
+                <aside class="sidebar">
+                    <div class="users-list">
+                        <h3><i class="fas fa-users"></i> Pengguna Online</h3>
+                        <ul id="onlineUsers">
+                            <!-- Daftar pengguna online akan dimuat di sini -->
+                        </ul>
+                    </div>
+                    
+                    <div class="rooms-list">
+                        <h3><i class="fas fa-door-open"></i> Ruang Chat</h3>
+                        <ul>
+                            <li class="active"><i class="fas fa-hashtag"></i> Umum</li>
+                            <li><i class="fas fa-hashtag"></i> Teknologi</li>
+                            <li><i class="fas fa-hashtag"></i> Hiburan</li>
+                            <li><i class="fas fa-hashtag"></i> Olahraga</li>
+                        </ul>
+                    </div>
+                </aside>
+                
+                <section class="chat-area">
+                    <div class="chat-messages" id="chatMessages">
+                        <!-- Pesan akan dimuat di sini -->
+                    </div>
+                    
+                    <form class="message-form" id="messageForm">
+                        <input type="text" id="messageInput" placeholder="Ketik pesan Anda..." autocomplete="off" required>
+                        <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                    </form>
+                </section>
             </div>
-        </section>
-    </main>
+        </main>
+    </div>
     
-    <footer>
-        <div class="container">
-            <p>&copy; 2023 ConnectHub. All rights reserved.</p>
-        </div>
-    </footer>
-    
-    <script src="script.js"></script>
+    <script src="chat.js"></script>
 </body>
 </html>
