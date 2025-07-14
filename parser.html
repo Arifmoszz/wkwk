@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIK Parser Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9f7ef;
+            border-radius: 5px;
+            display: none;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>NIK Parser</h1>
+        <p>Masukkan Nomor Induk Kependudukan (NIK) untuk mendapatkan informasi:</p>
+        
+        <input type="text" id="nikInput" placeholder="Masukkan 16 digit NIK" maxlength="16">
+        <button onclick="parseNIK()">Parse NIK</button>
+        
+        <div id="errorMsg" class="error"></div>
+        
+        <div id="result" class="result">
+            <h3>Informasi NIK:</h3>
+            <p><strong>Provinsi:</strong> <span id="provinsi"></span></p>
+            <p><strong>Kabupaten/Kota:</strong> <span id="kabupaten"></span></p>
+            <p><strong>Kecamatan:</strong> <span id="kecamatan"></span></p>
+            <p><strong>Tanggal Lahir:</strong> <span id="tglLahir"></span></p>
+            <p><strong>Jenis Kelamin:</strong> <span id="jenisKelamin"></span></p>
+            <p><strong>Nomor Urut:</strong> <span id="nomorUrut"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // Data provinsi (kode 2 digit pertama)
+        const provinsiData = {
+            '11': 'Aceh',
+            '12': 'Sumatera Utara',
+            '13': 'Sumatera Barat',
+            '14': 'Riau',
+            '15': 'Jambi',
+            '16': 'Sumatera Selatan',
+            '17': 'Bengkulu',
+            '18': 'Lampung',
+            '19': 'Kepulauan Bangka Belitung',
+            '21': 'Kepulauan Riau',
+            '31': 'DKI Jakarta',
+            '32': 'Jawa Barat',
+            '33': 'Jawa Tengah',
+            '34': 'DI Yogyakarta',
+            '35': 'Jawa Timur',
+            '36': 'Banten',
+            '51': 'Bali',
+            '52': 'Nusa Tenggara Barat',
+            '53': 'Nusa Tenggara Timur',
+            '61': 'Kalimantan Barat',
+            '62': 'Kalimantan Tengah',
+            '63': 'Kalimantan Selatan',
+            '64': 'Kalimantan Timur',
+            '65': 'Kalimantan Utara',
+            '71': 'Sulawesi Utara',
+            '72': 'Sulawesi Tengah',
+            '73': 'Sulawesi Selatan',
+            '74': 'Sulawesi Tenggara',
+            '75': 'Gorontalo',
+            '76': 'Sulawesi Barat',
+            '81': 'Maluku',
+            '82': 'Maluku Utara',
+            '91': 'Papua',
+            '92': 'Papua Barat'
+        };
+
+        function parseNIK() {
+            const nik = document.getElementById('nikInput').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            const resultDiv = document.getElementById('result');
+            
+            // Reset
+            errorMsg.textContent = '';
+            resultDiv.style.display = 'none';
+            
+            // Validasi
+            if (!nik) {
+                errorMsg.textContent = 'Silakan masukkan NIK';
+                return;
+            }
+            
+            if (nik.length !== 16 || !/^\d+$/.test(nik)) {
+                errorMsg.textContent = 'NIK harus terdiri dari 16 digit angka';
+                return;
+            }
+            
+            // Parse NIK
+            try {
+                const kodeProvinsi = nik.substring(0, 2);
+                const kodeKabupaten = nik.substring(2, 4);
+                const kodeKecamatan = nik.substring(4, 6);
+                const tglLahir = nik.substring(6, 12);
+                const nomorUrut = nik.substring(12);
+                
+                // Jenis kelamin (digit ke-7: 1-31 = laki-laki, 41-71 = perempuan)
+                const hariLahir = parseInt(tglLahir.substring(0, 2));
+                let jenisKelamin = 'Laki-laki';
+                if (hariLahir > 40) {
+                    jenisKelamin = 'Perempuan';
+                    hariLahir -= 40;
+                }
+                
+                // Format tanggal lahir
+                const tgl = hariLahir;
+                const bln = parseInt(tglLahir.substring(2, 4));
+                const thn = parseInt(tglLahir.substring(4, 6));
+                const tahunLengkap = thn < 30 ? '20' + (thn < 10 ? '0' + thn : thn) : '19' + (thn < 10 ? '0' + thn : thn);
+                const formattedTglLahir = `${tgl < 10 ? '0' + tgl : tgl}-${bln < 10 ? '0' + bln : bln}-${tahunLengkap}`;
+                
+                // Tampilkan hasil
+                document.getElementById('provinsi').textContent = provinsiData[kodeProvinsi] || 'Tidak diketahui';
+                document.getElementById('kabupaten').textContent = `Kode: ${kodeKabupaten} (Detail kabupaten/kota membutuhkan database lengkap)`;
+                document.getElementById('kecamatan').textContent = `Kode: ${kodeKecamatan} (Detail kecamatan membutuhkan database lengkap)`;
+                document.getElementById('tglLahir').textContent = formattedTglLahir;
+                document.getElementById('jenisKelamin').textContent = jenisKelamin;
+                document.getElementById('nomorUrut').textContent = nomorUrut;
+                
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                errorMsg.textContent = 'Terjadi kesalahan dalam memproses NIK';
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
